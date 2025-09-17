@@ -2,12 +2,14 @@
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
+// 画像を直接importする
+import image1 from '@/../image/1.png'
+import image2 from '@/../image/2.png'
+
 // 画像の状態管理
 const showFirstImage = ref(true)
 const isTransitioning = ref(false)
 const isSecondImageLoaded = ref(false)
-const image1 = ref('/image/1.png')
-const image2 = ref('/image/2.png')
 
 const router = useRouter()
 
@@ -28,13 +30,13 @@ const switchImage = async () => {
   // 1.png -> 2.png -> 紹介ページ の一連の流れ
   isTransitioning.value = true
   
-  // 2.pngのプリロードを開始
+  // 2.pngのプリロードを開始 - importした画像を直接使用
   if (!isSecondImageLoaded.value) {
     try {
-      await preloadImage(image2.value)
+      // importした画像はすでにロードされているため、直接フラグを設定
       isSecondImageLoaded.value = true
     } catch (error) {
-      console.error('画像のプリロードに失敗しました:', error)
+      console.error('画像の処理に失敗しました:', error)
     }
   }
   
@@ -157,7 +159,6 @@ onMounted(() => {
         :src="image1" 
         alt="Monitoring Best Friend Remix" 
         class="fullscreen-image" 
-        loading="eager"
       />
       <div class="image-overlay"></div>
     </div>
@@ -173,7 +174,6 @@ onMounted(() => {
         :src="image2" 
         alt="モニタリング" 
         class="fullscreen-image"
-        loading="lazy"
       />
       <div class="image-overlay"></div>
     </div>
