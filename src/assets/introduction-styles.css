@@ -304,11 +304,11 @@
   .timeline-section {
     margin-top: 3rem;
   }
-  
+
   .timeline-title {
     font-size: 2rem;
   }
-  
+
   .timeline-image-container {
     width: 300px;
     aspect-ratio: 1 / 1;
@@ -317,22 +317,23 @@
 
 /* レスポンシブデザイン - モバイル用 */
 @media (max-width: 480px) {
+
   /* モバイルでは縦一列に表示 */
   .timeline-item-left,
   .timeline-item-right {
     justify-content: center;
   }
-  
+
   .timeline-item-left .timeline-image-container,
   .timeline-item-right .timeline-image-container {
     margin: 0;
     width: 90%;
   }
-  
+
   .timeline-image-container {
     aspect-ratio: 1 / 1;
   }
-  
+
   .timeline-item {
     margin-bottom: 2rem;
   }
@@ -393,15 +394,19 @@
   0% {
     transform: scale(1);
   }
+
   14% {
     transform: scale(1.1);
   }
+
   28% {
     transform: scale(1);
   }
+
   42% {
     transform: scale(1.1);
   }
+
   70% {
     transform: scale(1);
   }
@@ -518,15 +523,24 @@
 }
 
 @keyframes bounce {
-  0%, 20%, 53%, 80%, 100% {
+
+  0%,
+  20%,
+  53%,
+  80%,
+  100% {
     transform: translateY(-3px) scale(1);
   }
-  40%, 43% {
+
+  40%,
+  43% {
     transform: translateY(-15px) scale(1.05);
   }
+
   70% {
     transform: translateY(-8px) scale(1.02);
   }
+
   90% {
     transform: translateY(-1px) scale(1.01);
   }
