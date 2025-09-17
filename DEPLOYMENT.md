@@ -42,12 +42,12 @@ git remote add origin https://github.com/您的用户名/您的仓库名.git
 将您的本地提交推送到 GitHub 上的远程仓库：
 
 ```bash
-git push -u origin main
+git push -u origin master
 ```
 
-> 注意：如果您的默认分支名称是 master 而不是 main，请使用以下命令：
+> 注意：如果您的 GitHub 仓库的默认分支名称是 main，请使用以下命令：
 > ```bash
-> git push -u origin master
+> git push -u origin main
 > ```
 
 ## 步骤 6: 验证部署
@@ -92,14 +92,19 @@ npm install -D gh-pages
 
 ```json
 "scripts": {
-  "deploy": "gh-pages -d dist"
+  "deploy": "gh-pages -d dist",
+  "deploy-master": "gh-pages -d dist -b master"
 }
 ```
 
 4. 执行部署命令：
 
 ```bash
-npm run deploy
+# 如果要部署到 master 分支（适合当前项目）
+npm run deploy-master
+
+# 如果要部署到 main 分支
+# npm run deploy
 ```
 
 5. 几分钟后，您的网站将可以通过 `https://您的用户名.github.io/您的仓库名/` 访问。
