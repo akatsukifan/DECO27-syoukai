@@ -40,7 +40,7 @@
   width: 100%;
   height: 100%;
   z-index: 0;
-  background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+  background: linear-gradient(135deg, #fccdd3 0%, #f9ecec 100%);
 }
 
 .introduction-container {
@@ -85,11 +85,67 @@
   z-index: 20;
 }
 
+/* 右侧社交媒体图标组件 */
+.social-media-container {
+  position: fixed;
+  right: 2rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+}
+
+.social-icon-wrapper {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 40px;
+  padding: 1.5rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.social-icon {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  text-decoration: none;
+}
+
+.social-icon:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: scale(1.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.social-icon-inner {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+/* 响应式设计 - 小屏幕设备上隐藏社交媒体组件 */
+@media (max-width: 768px) {
+  .social-media-container {
+    display: none;
+  }
+}
+
 .back-button {
   background: rgba(255, 255, 255, 0.2);
   backdrop-filter: blur(5px);
   -webkit-backdrop-filter: blur(5px);
-  color: white;
+  color: black;
   border: 1px solid rgba(255, 255, 255, 0.3);
   padding: 0.8rem 2rem;
   border-radius: 30px;
@@ -128,16 +184,9 @@
   width: 100%;
 }
 
-/* タイムラインの縦線 */
+/* タイムラインの縦線 - 削除 */
 .timeline-line {
-  position: absolute;
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateX(-50%);
-  z-index: 1;
+  display: none;
 }
 
 /* タイムラインアイテム */
@@ -213,22 +262,20 @@
 .timeline-image-container:hover .timeline-image-link::after {
   content: "▶";
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 3rem;
   color: white;
   text-shadow: 0 0 15px rgba(0, 0, 0, 0.7);
   background: rgba(0, 0, 0, 0.3);
-  width: 80px;
-  height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
+  border-radius: 12px;
   opacity: 0;
   animation: fadeIn 0.3s ease-out forwards;
-  margin-left: 3px; /* ビデオプレイアイコンの視覚的な中心合わせ */
 }
 
 /* タイムラインの画像 */
@@ -309,6 +356,23 @@
   box-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
 }
 
+.heart-text-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.heart-text-left,
+.heart-text-right {
+  font-size: 18px;
+  font-weight: 500;
+  color: white;
+  white-space: nowrap;
+  text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
 .heart-icon {
   position: relative;
   font-size: 4rem;
@@ -316,6 +380,7 @@
   transition: all 0.3s ease;
   user-select: none;
   z-index: 10;
+  color: rgba(255, 105, 180, 0.8);
 }
 
 .heart-icon:hover {

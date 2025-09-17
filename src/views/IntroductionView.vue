@@ -3,6 +3,21 @@
     <!-- 淡蓝色背景 -->
     <div class="introduction-background"></div>
     
+    <!-- 右侧社交媒体图标组件 -->
+    <div class="social-media-container">
+      <div class="social-icon-wrapper">
+        <a href="https://x.com/deco27" target="_blank" rel="noopener noreferrer" class="social-icon">
+          <img src="/image/twitter.png" alt="X (Twitter)" class="social-icon-inner">
+        </a>
+        <a href="https://space.bilibili.com/177291194?spm_id_from=333.337.0.0" target="_blank" rel="noopener noreferrer" class="social-icon">
+          <img src="/image/bilibili.jpg" alt="Bilibili" class="social-icon-inner">
+        </a>
+        <a href="https://www.youtube.com/channel/UCGmO0S4S-AunjRdmxA6TQYg" target="_blank" rel="noopener noreferrer" class="social-icon">
+          <img src="/image/youtube.jpg" alt="YouTube" class="social-icon-inner">
+        </a>
+      </div>
+    </div>
+    
     <!-- 毛ガラス効果の紹介コンテナ -->
     <div class="introduction-container">
       <h1 class="introduction-title">DECO*27（デコ・ニーナ）</h1>
@@ -36,8 +51,10 @@
         <!-- タイムラインの最後のハート -->
         <div class="timeline-heart-container">
           <div class="timeline-point heart-point"></div>
-          <div class="heart-icon" @click="showLikePopup = true">
-            ❤
+          <div class="heart-text-container">
+            <span class="heart-text-left">音楽の旅を</span>
+            <span class="heart-icon" @click="showLikePopup = true">❤</span>
+            <span class="heart-text-right">共に楽しもう</span>
           </div>
         </div>
       </div>
