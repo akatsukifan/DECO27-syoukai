@@ -1,50 +1,90 @@
 <script setup lang="ts">
 import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import image1 from '../../image/1.png'
-import image2 from '../../image/2.png'
 
 // 画像の状態管理
 const showFirstImage = ref(true)
 const isTransitioning = ref(false)
+const isSecondImageLoaded = ref(false)
+const image1 = ref('/image/1.png')
+const image2 = ref('/image/2.png')
 
 const router = useRouter()
+
+// 画像のプリロード関数
+const preloadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onload = () => resolve(img)
+    img.onerror = reject
+    img.src = src
+  })
+}
 
 // 画像切り替えアニメーション
 const switchImage = async () => {
   if (isTransitioning.value) return
   
-  if (showFirstImage.value) {
-    // 1.png -> 2.png
-    isTransitioning.value = true
-    
-    // フェードアウト
-    const transitionElement = document.getElementById('transition-container')
-    if (transitionElement) {
-      transitionElement.style.opacity = '0'
+  // 1.png -> 2.png -> 紹介ページ の一連の流れ
+  isTransitioning.value = true
+  
+  // 2.pngのプリロードを開始
+  if (!isSecondImageLoaded.value) {
+    try {
+      await preloadImage(image2.value)
+      isSecondImageLoaded.value = true
+    } catch (error) {
+      console.error('画像のプリロードに失敗しました:', error)
     }
-    
-    // アニメーションの完了を待つ
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 画像を切り替える
-    showFirstImage.value = false
-    
-    // フェードイン
-    if (transitionElement) {
-      transitionElement.style.opacity = '1'
-    }
-    
-    // アニメーションの完了を待つ
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    isTransitioning.value = false
-  } else {
-    // 2.png -> 紹介ページ
-    goToIntroduction()
   }
+  
+  // フェードアウト - より明確なアニメーション
+  const transitionElement = document.getElementById('transition-container')
+  if (transitionElement) {
+    transitionElement.style.transition = 'opacity 1s ease-out, transform 1s ease-out'
+    transitionElement.style.opacity = '0'
+    transitionElement.style.transform = 'scale(1.1)'
+  }
+  
+  // 球体を即座に消失させる
+  const sphereElement = document.querySelector('.transparent-sphere')
+  if (sphereElement) {
+    sphereElement.classList.add('fade-out')
+  }
+  
+  // アニメーションの完了を待つ
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 1000))
+  
+  // 画像を切り替える
+  showFirstImage.value = false
+  
+  // フェードイン - 2.pngを表示
+  if (transitionElement) {
+    transitionElement.style.transition = 'opacity 0.5s ease-in'
+    transitionElement.style.opacity = '1'
+    transitionElement.style.transform = 'scale(1)'
+  }
+  
+  // 2.pngを短時間表示
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 300))
+  
+  // 2.pngから紹介ページへの切り替えアニメーション
+  if (transitionElement) {
+    transitionElement.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out'
+    transitionElement.style.opacity = '0'
+    transitionElement.style.transform = 'scale(1.1)'
+  }
+  
+  // アニメーションの完了を待つ
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 800))
+  
+  // 紹介ページにルーティング
+  router.push('/introduction')
+  
+  isTransitioning.value = false
 }
 
 // 紹介ページに切り替える
@@ -109,29 +149,34 @@ onMounted(() => {
       class="image-transition-container"
     >
       <!-- 最初の画像：Monitoring Best Friend Remix -->
-      <div 
-        v-if="showFirstImage" 
-        class="image-container first-image"
-      >
-        <img :src="image1" alt="Monitoring Best Friend Remix" class="fullscreen-image" />
-        <div class="image-overlay">
-          <h2 class="image-title">Monitoring Best Friend Remix</h2>
-        </div>
-      </div>
-      
-      <!-- 次の画像：モニタリング -->
-      <div 
-        v-else 
-        class="image-container second-image"
-        @click="switchImage"
-        style="cursor: pointer;"
-      >
-        <img :src="image2" alt="モニタリング" class="fullscreen-image" />
-        <div class="image-overlay">
-          <h2 class="image-title">モニタリング</h2>
-          <p class="click-hint">クリックしてDECO27の紹介を見る（または球体をクリック）</p>
-        </div>
-      </div>
+    <div 
+      v-if="showFirstImage" 
+      class="image-container first-image"
+    >
+      <img 
+        :src="image1" 
+        alt="Monitoring Best Friend Remix" 
+        class="fullscreen-image" 
+        loading="eager"
+      />
+      <div class="image-overlay"></div>
+    </div>
+    
+    <!-- 次の画像：モニタリング -->
+    <div 
+      v-else 
+      class="image-container second-image"
+      @click="switchImage"
+      style="cursor: pointer;"
+    >
+      <img 
+        :src="image2" 
+        alt="モニタリング" 
+        class="fullscreen-image"
+        loading="lazy"
+      />
+      <div class="image-overlay"></div>
+    </div>
     </div>
     
     <!-- 半透明な円形球体 -->
@@ -380,20 +425,38 @@ html, body {
 }
 
 /* 球体のフェードアウトアニメーション */
-.fade-out {
-  animation: fadeOut 1s ease-out forwards;
-}
+  .fade-out {
+    animation: fadeOut 0.7s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  }
 
-@keyframes fadeOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
+  @keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: scale(0.8);
+    }
   }
-  to {
-    opacity: 0;
-    transform: scale(0.8);
+  
+  /* 画像のパン効果 - 視覚的な動きを追加 */
+  .first-image .fullscreen-image {
+    animation: panImage 20s linear infinite alternate;
   }
-}
+  
+  .second-image .fullscreen-image {
+    animation: panImage 25s linear infinite alternate;
+  }
+  
+  @keyframes panImage {
+    0% {
+      transform: scale(1.01) translate(0, 0);
+    }
+    100% {
+      transform: scale(1.01) translate(2%, 2%);
+    }
+  }
 
 
 

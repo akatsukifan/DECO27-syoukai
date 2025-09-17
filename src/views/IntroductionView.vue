@@ -50,7 +50,6 @@
         
         <!-- タイムラインの最後のハート -->
         <div class="timeline-heart-container">
-          <div class="timeline-point heart-point"></div>
           <div class="heart-text-container">
             <span class="heart-text-left">音楽の旅を</span>
             <span class="heart-icon" @click="showLikePopup = true">❤</span>
