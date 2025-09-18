@@ -1,23 +1,38 @@
 <template>
   <div class="introduction-page">
-    <!-- 淡蓝色背景 -->
+    <!-- 薄い青色の背景 -->
     <div class="introduction-background"></div>
-    
-    <!-- 右侧社交媒体图标组件 -->
+
+    <!-- 右側のソーシャルメディアアイコンコンポーネント -->
     <div class="social-media-container">
       <div class="social-icon-wrapper">
-        <a href="https://x.com/deco27" target="_blank" rel="noopener noreferrer" class="social-icon">
-          <img src="/image/twitter.png" alt="X (Twitter)" class="social-icon-inner">
+        <a
+          href="https://x.com/deco27"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-icon"
+        >
+          <img src="/image/twitter.png" alt="X (Twitter)" class="social-icon-inner" />
         </a>
-        <a href="https://space.bilibili.com/177291194?spm_id_from=333.337.0.0" target="_blank" rel="noopener noreferrer" class="social-icon">
-          <img src="/image/bilibili.jpg" alt="Bilibili" class="social-icon-inner">
+        <a
+          href="https://space.bilibili.com/177291194?spm_id_from=333.337.0.0"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-icon"
+        >
+          <img src="/image/bilibili.jpg" alt="Bilibili" class="social-icon-inner" />
         </a>
-        <a href="https://www.youtube.com/channel/UCGmO0S4S-AunjRdmxA6TQYg" target="_blank" rel="noopener noreferrer" class="social-icon">
-          <img src="/image/youtube.jpg" alt="YouTube" class="social-icon-inner">
+        <a
+          href="https://www.youtube.com/channel/UCGmO0S4S-AunjRdmxA6TQYg"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="social-icon"
+        >
+          <img src="/image/youtube.jpg" alt="YouTube" class="social-icon-inner" />
         </a>
       </div>
     </div>
-    
+
     <!-- 毛ガラス効果の紹介コンテナ -->
     <div class="introduction-container">
       <h1 class="introduction-title">DECO*27（デコ・ニーナ）</h1>
@@ -37,17 +52,27 @@
       <div class="timeline-container">
         <!-- タイムラインの縦線 -->
         <div class="timeline-line"></div>
-        
+
         <!-- タイムラインアイテム -->
-        <div class="timeline-item" v-for="(item, index) in timelineItems" :key="index" :class="{ 'timeline-item-left': index % 2 === 0, 'timeline-item-right': index % 2 !== 0 }">
+        <div
+          class="timeline-item"
+          v-for="(item, index) in timelineItems"
+          :key="index"
+          :class="{ 'timeline-item-left': index % 2 === 0, 'timeline-item-right': index % 2 !== 0 }"
+        >
           <div class="timeline-point"></div>
           <div class="timeline-image-container">
-            <a :href="item.youtubeLink" target="_blank" rel="noopener noreferrer" class="timeline-image-link">
-              <img :src="item.image" alt="DECO*27作品" class="timeline-image">
+            <a
+              :href="item.youtubeLink"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="timeline-image-link"
+            >
+              <img :src="item.image" alt="DECO*27作品" class="timeline-image" />
             </a>
           </div>
         </div>
-        
+
         <!-- タイムラインの最後のハート -->
         <div class="timeline-heart-container">
           <div class="heart-text-container">
@@ -58,7 +83,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- いいねポップアップ -->
     <div v-if="showLikePopup" class="like-popup-overlay" @click="closePopup">
       <div class="like-popup-content" @click.stop>
@@ -68,23 +93,14 @@
           <span class="count-number">{{ likeCount }}</span>
           <span class="count-text">人がいいねしました</span>
         </div>
-        <button class="like-button" @click="addLike">
-          いいねする
-        </button>
-        <button class="close-button" @click="closePopup">
-          閉じる
-        </button>
+        <button class="like-button" @click="addLike">いいねする</button>
+        <button class="close-button" @click="closePopup">閉じる</button>
       </div>
     </div>
-    
+
     <!-- ページナビゲーション -->
     <div class="page-nav">
-      <button 
-        class="back-button"
-        @click="goBack"
-      >
-        最初に戻る
-      </button>
+      <button class="back-button" @click="goBack">最初に戻る</button>
     </div>
   </div>
 </template>
@@ -108,28 +124,28 @@ import image7 from '@/../image/7.png'
 import image8 from '@/../image/8.png'
 
 const timelineItems = [
-  { 
-    image: image3, 
+  {
+    image: image3,
     youtubeLink: 'https://www.youtube.com/watch?v=e1xCOsgWG0M'
   },
-  { 
-    image: image4, 
+  {
+    image: image4,
     youtubeLink: 'https://www.youtube.com/watch?v=eSW2LVbPThw'
   },
-  { 
-    image: image5, 
+  {
+    image: image5,
     youtubeLink: 'https://www.youtube.com/watch?v=-H2PCK7DJsQ'
   },
-  { 
-    image: image6, 
+  {
+    image: image6,
     youtubeLink: 'https://www.youtube.com/watch?v=BI9Ue6JwJic'
   },
-  { 
-    image: image7, 
+  {
+    image: image7,
     youtubeLink: 'https://www.youtube.com/watch?v=C-CYwNz3z8w'
   },
-  { 
-    image: image8, 
+  {
+    image: image8,
     youtubeLink: 'https://www.youtube.com/watch?v=kbNdx0yqbZE'
   }
 ]
