@@ -3,8 +3,8 @@ import { ref, onMounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 
 // 画像を直接importする
-import image1 from '@/../image/1.png'
-import image2 from '@/../image/2.png'
+import image1 from '/image/1.png'
+import image2 from '/image/2.png'
 
 // 画像の状態管理
 const showFirstImage = ref(true)
