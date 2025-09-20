@@ -5,7 +5,7 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './',
+  base: '/DECO27-syoukai/',
   plugins: [
     vue(),
     vueDevTools(),
