@@ -11,23 +11,84 @@ const showFirstImage = ref(true)
 const isTransitioning = ref(false)
 const isSecondImageLoaded = ref(false)
 const isImageLoading = ref(false)
+const loadingProgress = ref(0)
 
 const router = useRouter()
 
-// 画像のプリロード関数
+// 画像のプリロード関数 - 進捗を表示するように強化
+// 画像のプリロード関数 - パフォーマンスを最適化
 const preloadImage = (imageSrc: string): Promise<void> => {
   return new Promise((resolve, reject) => {
     isImageLoading.value = true
-    const img = new Image()
-    img.src = imageSrc
-    img.onload = () => {
-      isImageLoading.value = false
-      resolve()
+    loadingProgress.value = 0
+    
+    // 画像サイズが大きい可能性があるため、警告を追加
+    const checkImageSize = async () => {
+      try {
+        // 画像のContent-Lengthを取得するための軽量なHEADリクエスト
+        const response = await fetch(imageSrc, { method: 'HEAD' })
+        const contentLength = response.headers.get('content-length')
+        
+        if (contentLength) {
+          const fileSizeMB = parseInt(contentLength) / (1024 * 1024)
+          if (fileSizeMB > 1) {
+            console.warn(`⚠️ ${imageSrc} のサイズが ${fileSizeMB.toFixed(2)}MB と大きいです。画像の圧縮やWebP/AVIF形式への変換を検討してください。`)
+          }
+        }
+      } catch (error) {
+        // HEADリクエストが失敗しても画像の読み込みは続行
+        console.debug('画像サイズの確認に失敗しました:', error)
+      }
     }
-    img.onerror = (error) => {
+    
+    // 非同期で画像サイズを確認
+    checkImageSize()
+    
+    const img = new Image()
+    
+    // 画像の読み込み進捗を取得（現代のブラウザでサポート）
+    img.onprogress = (event) => {
+      if (event.lengthComputable) {
+        loadingProgress.value = Math.round((event.loaded / event.total) * 100)
+      }
+    }
+    
+    // 読み込み時間が長すぎる場合のタイムアウト対策
+    const timeoutId = setTimeout(() => {
+      if (isImageLoading.value) {
+        console.warn('画像の読み込みが遅いです。ネットワーク環境を確認するか、画像の圧縮を検討してください。')
+      }
+    }, 3000)
+    
+    // 読み込み完了 - メモリリーク防止とデコード最適化を含めた統合関数
+    img.onload = () => {
+      clearTimeout(timeoutId)
       isImageLoading.value = false
+      loadingProgress.value = 100
+      
+      // 読み込みが完了したら、即座にメモリに保持するためのデコード操作
+      img.decode().then(() => {
+        // 画像のデコードが完了したことを確認
+        console.debug(`${imageSrc} のデコードが完了しました。`)
+        resolve()
+      }).catch(() => {
+        // デコードに失敗しても画像は表示可能な場合があるのでresolve
+        resolve()
+      })
+    }
+    
+    // 読み込みエラー - エラーハンドリングを強化
+    img.onerror = (error) => {
+      clearTimeout(timeoutId) // エラー時もタイムアウトを解除
+      console.error(`画像の読み込みエラー: ${imageSrc}`, error)
+      isImageLoading.value = false
+      loadingProgress.value = 0
       reject(error)
     }
+    
+    // 画像読み込みを開始 - クロスオリジンの設定を追加
+    img.crossOrigin = 'anonymous'
+    img.src = imageSrc
   })
 }
 
