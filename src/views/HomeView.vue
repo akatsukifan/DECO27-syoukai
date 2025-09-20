@@ -10,23 +10,43 @@ import image2 from '@/../image/2.png'
 const showFirstImage = ref(true)
 const isTransitioning = ref(false)
 const isSecondImageLoaded = ref(false)
+const isImageLoading = ref(false)
 
 const router = useRouter()
 
+// 画像のプリロード関数
+const preloadImage = (imageSrc: string): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    isImageLoading.value = true
+    const img = new Image()
+    img.src = imageSrc
+    img.onload = () => {
+      isImageLoading.value = false
+      resolve()
+    }
+    img.onerror = (error) => {
+      isImageLoading.value = false
+      reject(error)
+    }
+  })
+}
+
 // 画像切り替えアニメーション
 const switchImage = async () => {
-  if (isTransitioning.value) return
+  if (isTransitioning.value || isImageLoading.value) return
 
   // 1.png -> 2.png -> 紹介ページ の一連の流れ
   isTransitioning.value = true
 
-  // 2.pngのプリロードを開始 - importした画像を直接使用
+  // 2.pngのプリロードを開始 - 実際に画像が読み込まれるまで待つ
   if (!isSecondImageLoaded.value) {
     try {
-      // importした画像はすでにロードされているため、直接フラグを設定
+      await preloadImage(image2)
       isSecondImageLoaded.value = true
     } catch (error) {
       console.error('画像の処理に失敗しました:', error)
+      isTransitioning.value = false
+      return
     }
   }
 
@@ -129,12 +149,14 @@ onMounted(() => {
       @click="switchImage"
       :style="{
         transform: `translate(${mouseX * 30}px, ${mouseY * 30}px)`,
-        cursor: isTransitioning ? 'wait' : 'pointer'
+        cursor: isTransitioning || isImageLoading ? 'wait' : 'pointer'
       }"
     >
       <div class="sphere-content">
         <p class="sphere-text">DECO27</p>
-        <p class="sphere-subtext" v-if="showFirstImage">クリックして続ける</p>
+        <p class="sphere-subtext" v-if="showFirstImage">
+          {{ isImageLoading ? '画像を読み込んでいます...' : 'クリックして続ける' }}
+        </p>
         <p class="sphere-subtext" v-else>クリックして紹介を見る</p>
       </div>
     </div>
