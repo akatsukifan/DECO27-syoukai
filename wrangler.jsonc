@@ -1,7 +1,7 @@
 {
   "name": "deco27-demo",
   "compatibility_date": "2025-09-20",
-  "pages": {
-    "build_output_dir": "./dist"
+  "assets": {
+    "directory": "./dist"
   }
 }
