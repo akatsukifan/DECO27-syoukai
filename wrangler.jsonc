@@ -1,9 +1,0 @@
-{
-{
-  "name": "deco0syoukai",
-  "compatibility_date": "2025-09-20",
-  "pages_build_output_dir": "./dist",
-  "site": {
-    "bucket": "./dist"
-  }
-}

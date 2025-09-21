@@ -5,6 +5,8 @@ import { fileURLToPath, URL } from 'node:url'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // 如果这是个人/组织主页(用户名.github.io)，保持 base: '/' 
+  // 如果这是项目仓库，将 base 修改为 '/仓库名称/'
   base: '/',
   plugins: [
     vue(),

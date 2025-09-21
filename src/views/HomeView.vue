@@ -1,6 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
+import { preloadImage } from '../utils/imageLoader'
+import { detectNetworkQuality, detectBatteryStatus } from '../utils/performanceOptimizer'
+import type { ImageLoadingStatus } from '../types'
 
 // 画像を直接importする
 import image1 from '/image/1.png'
@@ -15,155 +18,124 @@ const loadingProgress = ref(0)
 
 const router = useRouter()
 
-// 画像のプリロード関数 - 進捗を表示するように強化
-// 画像のプリロード関数 - パフォーマンスを最適化
-const preloadImage = (imageSrc: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    isImageLoading.value = true
-    loadingProgress.value = 0
-    
-    // 画像サイズが大きい可能性があるため、警告を追加
-    const checkImageSize = async () => {
-      try {
-        // 画像のContent-Lengthを取得するための軽量なHEADリクエスト
-        const response = await fetch(imageSrc, { method: 'HEAD' })
-        const contentLength = response.headers.get('content-length')
-        
-        if (contentLength) {
-          const fileSizeMB = parseInt(contentLength) / (1024 * 1024)
-          if (fileSizeMB > 1) {
-            console.warn(`⚠️ ${imageSrc} のサイズが ${fileSizeMB.toFixed(2)}MB と大きいです。画像の圧縮やWebP/AVIF形式への変換を検討してください。`)
-          }
-        }
-      } catch (error) {
-        // HEADリクエストが失敗しても画像の読み込みは続行
-        console.debug('画像サイズの確認に失敗しました:', error)
-      }
-    }
-    
-    // 非同期で画像サイズを確認
-    checkImageSize()
-    
-    const img = new Image()
-    
-    // 画像の読み込み進捗を取得（現代のブラウザでサポート）
-    img.onprogress = (event) => {
-      if (event.lengthComputable) {
-        loadingProgress.value = Math.round((event.loaded / event.total) * 100)
-      }
-    }
-    
-    // 読み込み時間が長すぎる場合のタイムアウト対策
-    const timeoutId = setTimeout(() => {
-      if (isImageLoading.value) {
-        console.warn('画像の読み込みが遅いです。ネットワーク環境を確認するか、画像の圧縮を検討してください。')
-      }
-    }, 3000)
-    
-    // 読み込み完了 - メモリリーク防止とデコード最適化を含めた統合関数
-    img.onload = () => {
-      clearTimeout(timeoutId)
-      isImageLoading.value = false
-      loadingProgress.value = 100
-      
-      // 読み込みが完了したら、即座にメモリに保持するためのデコード操作
-      img.decode().then(() => {
-        // 画像のデコードが完了したことを確認
-        console.debug(`${imageSrc} のデコードが完了しました。`)
-        resolve()
-      }).catch(() => {
-        // デコードに失敗しても画像は表示可能な場合があるのでresolve
-        resolve()
-      })
-    }
-    
-    // 読み込みエラー - エラーハンドリングを強化
-    img.onerror = (error) => {
-      clearTimeout(timeoutId) // エラー時もタイムアウトを解除
-      console.error(`画像の読み込みエラー: ${imageSrc}`, error)
-      isImageLoading.value = false
-      loadingProgress.value = 0
-      reject(error)
-    }
-    
-    // 画像読み込みを開始 - クロスオリジンの設定を追加
-    img.crossOrigin = 'anonymous'
-    img.src = imageSrc
-  })
-}
-
-// 画像切り替えアニメーション
-const switchImage = async () => {
-  if (isTransitioning.value || isImageLoading.value) return
-
-  // 1.png -> 2.png -> 紹介ページ の一連の流れ
-  isTransitioning.value = true
-
-  // 2.pngのプリロードを開始 - 実際に画像が読み込まれるまで待つ
-  if (!isSecondImageLoaded.value) {
-    try {
-      await preloadImage(image2)
-      isSecondImageLoaded.value = true
-    } catch (error) {
-      console.error('画像の処理に失敗しました:', error)
-      isTransitioning.value = false
-      return
-    }
-  }
-
-  // フェードアウト - より明確なアニメーション
-  const transitionElement = document.getElementById('transition-container')
-  if (transitionElement) {
-    transitionElement.style.transition = 'opacity 1s ease-out, transform 1s ease-out'
-    transitionElement.style.opacity = '0'
-    transitionElement.style.transform = 'scale(1.1)'
-  }
-
-  // 球体を即座に消失させる
-  const sphereElement = document.querySelector('.transparent-sphere')
-  if (sphereElement) {
-    sphereElement.classList.add('fade-out')
-  }
-
-  // アニメーションの完了を待つ
-  await nextTick()
-  await new Promise(resolve => setTimeout(resolve, 1000))
-
-  // 画像を切り替える
-  showFirstImage.value = false
-
-  // フェードイン - 2.pngを表示
-  if (transitionElement) {
-    transitionElement.style.transition = 'opacity 0.5s ease-in'
-    transitionElement.style.opacity = '1'
-    transitionElement.style.transform = 'scale(1)'
-  }
-
-  // 2.pngを短時間表示
-  await nextTick()
-  await new Promise(resolve => setTimeout(resolve, 300))
-
-  // 2.pngから紹介ページへの切り替えアニメーション
-  if (transitionElement) {
-    transitionElement.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out'
-    transitionElement.style.opacity = '0'
-    transitionElement.style.transform = 'scale(1.1)'
-  }
-
-  // アニメーションの完了を待つ
-  await nextTick()
-  await new Promise(resolve => setTimeout(resolve, 800))
-
-  // 紹介ページにルーティング
-  router.push('/introduction')
-
-  isTransitioning.value = false
-}
-
 // マウスの位置に合わせて球体を動かす
 const mouseX = ref(0)
 const mouseY = ref(0)
 
+// 画像のプリロード処理
+const handleImagePreload = async (imageSrc: string) => {
+  try {
+    isImageLoading.value = true
+    loadingProgress.value = 0
+    
+    // ネットワーク品質の検出
+    const networkQuality = detectNetworkQuality()
+    if (networkQuality === 'slow-2g' || networkQuality === '2g') {
+      console.warn('⚠️ 低速ネットワーク環境が検出されました。画像の読み込みが遅くなる可能性があります。')
+    }
+    
+    // バッテリー状態の検出（省エネモードの判断に使用）
+    const batteryLevel = await detectBatteryStatus()
+    if (batteryLevel && batteryLevel < 0.2) {
+      console.warn('⚠️ バッテリー残量が少ないため、画像の読み込みが制限される場合があります。')
+    }
+    
+    // 画像のプリロード（ユーティリティ関数を使用）
+    await preloadImage(imageSrc, (progress) => {
+      loadingProgress.value = progress
+    })
+    
+    isImageLoading.value = false
+    loadingProgress.value = 100
+    
+  } catch (error) {
+    console.error('画像の読み込みエラー:', error)
+    isImageLoading.value = false
+    loadingProgress.value = 0
+    throw error
+  }
+}
+
+// 画像切り替えアニメーション
+const switchImage = async () => {
+  // トランジション中または読み込み中は操作を無視
+  if (isTransitioning.value || isImageLoading.value) {
+    console.info('画像の切り替え操作がキャンセルされました（トランジション中または読み込み中）')
+    return
+  }
+
+  try {
+    // 1.png -> 2.png -> 紹介ページ の一連の流れ
+    isTransitioning.value = true
+
+    // 2.pngのプリロードを開始 - 実際に画像が読み込まれるまで待つ
+    if (!isSecondImageLoaded.value) {
+      try {
+        await handleImagePreload(image2)
+        isSecondImageLoaded.value = true
+      } catch (error) {
+        console.error('画像の処理に失敗しました:', error)
+        isTransitioning.value = false
+        return
+      }
+    }
+
+    // DOM要素の取得
+    const transitionElement = document.getElementById('transition-container')
+    const sphereElement = document.querySelector('.transparent-sphere')
+
+    // フェードアウト - より明確なアニメーション
+    if (transitionElement) {
+      transitionElement.style.transition = 'opacity 1s ease-out, transform 1s ease-out'
+      transitionElement.style.opacity = '0'
+      transitionElement.style.transform = 'scale(1.1)'
+    }
+
+    // 球体を即座に消失させる
+    if (sphereElement) {
+      sphereElement.classList.add('fade-out')
+    }
+
+    // アニメーションの完了を待つ
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 1000))
+
+    // 画像を切り替える
+    showFirstImage.value = false
+
+    // フェードイン - 2.pngを表示
+    if (transitionElement) {
+      transitionElement.style.transition = 'opacity 0.5s ease-in'
+      transitionElement.style.opacity = '1'
+      transitionElement.style.transform = 'scale(1)'
+    }
+
+    // 2.pngを短時間表示
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 300))
+
+    // 2.pngから紹介ページへの切り替えアニメーション
+    if (transitionElement) {
+      transitionElement.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out'
+      transitionElement.style.opacity = '0'
+      transitionElement.style.transform = 'scale(1.1)'
+    }
+
+    // アニメーションの完了を待つ
+    await nextTick()
+    await new Promise(resolve => setTimeout(resolve, 800))
+
+    // 紹介ページにルーティング
+    router.push('/introduction')
+
+  } catch (error) {
+    console.error('画像切り替えプロセス中にエラーが発生しました:', error)
+  } finally {
+    isTransitioning.value = false
+  }
+}
+
+// マウスの位置に合わせて球体を動かす
 const handleMouseMove = (e: MouseEvent) => {
   const windowWidth = window.innerWidth
   const windowHeight = window.innerHeight
@@ -176,11 +148,16 @@ const handleMouseMove = (e: MouseEvent) => {
 // ページの読み込みが完了したらイベントリスナーを追加
 onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
+  
+  // 初期画像のプリロード（バックグラウンドで実行）
+  handleImagePreload(image1).catch(error => {
+    console.error('初期画像のプリロードに失敗しました:', error)
+  })
+})
 
-  // ページを離れるときにイベントリスナーを削除
-  return () => {
-    window.removeEventListener('mousemove', handleMouseMove)
-  }
+// コンポーネントがアンマウントされる際にイベントリスナーを削除
+onUnmounted(() => {
+  window.removeEventListener('mousemove', handleMouseMove)
 })
 </script>
 
@@ -216,7 +193,7 @@ onMounted(() => {
       <div class="sphere-content">
         <p class="sphere-text">DECO27</p>
         <p class="sphere-subtext" v-if="showFirstImage">
-          {{ isImageLoading ? '画像を読み込んでいます...' : 'クリックして続ける' }}
+          {{ isImageLoading ? `画像を読み込んでいます...${loadingProgress}%` : 'クリックして続ける' }}
         </p>
         <p class="sphere-subtext" v-else>クリックして紹介を見る</p>
       </div>
@@ -290,8 +267,7 @@ body {
 
 /* ベースコンテナ - 重複スタイルを整理 */
 .deco27-intro,
-.image-transition-container,
-.introduction-page {
+.image-transition-container {
   width: 100vw;
   height: 100vh;
   position: fixed;
@@ -303,8 +279,7 @@ body {
 }
 
 /* 画像コンテナ */
-.image-container,
-.introduction-background {
+.image-container {
   position: absolute;
   top: 0;
   left: 0;
@@ -314,7 +289,7 @@ body {
   z-index: -1;
 }
 
-/* 強化された画像の自動調整 - 重複定義を削除し、完全なカバレッジを確保 */
+/* 強化された画像の自動調整 - 完全なカバレッジを確保 */
 .fullscreen-image {
   position: absolute;
   top: 0;
@@ -346,32 +321,6 @@ body {
   text-align: center;
 }
 
-.image-title {
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
-  margin: 0 0 1rem 0;
-}
-
-.click-hint {
-  font-size: 1.2rem;
-  opacity: 0.9;
-  margin: 0;
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    opacity: 0.9;
-  }
-  50% {
-    opacity: 0.5;
-  }
-  100% {
-    opacity: 0.9;
-  }
-}
-
 /* 半透明な円形球体 */
 .transparent-sphere {
   width: 300px;
@@ -395,7 +344,7 @@ body {
 
 .transparent-sphere:hover {
   box-shadow: 0 0 70px rgba(255, 255, 255, 0.4), inset 0 0 40px rgba(255, 255, 255, 0.3);
-  transform: scale(1.05) translate(var(--mouse-x, 0) px, var(--mouse-y, 0) px);
+  transform: scale(1.05) translate(var(--mouse-x, 0)px, var(--mouse-y, 0)px);
 }
 
 /* 球体の内容 */
@@ -489,38 +438,6 @@ body {
   }
 }
 
-/* ページナビゲーション */
-.page-nav {
-  position: absolute;
-  bottom: 2rem;
-  z-index: 20;
-}
-
-.back-button {
-  background: rgba(255, 255, 255, 0.2);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-  color: white;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  padding: 0.8rem 2rem;
-  border-radius: 30px;
-  font-size: 1.1rem;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-}
-
-.back-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.3);
-  transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
-}
-
-.back-button:disabled {
-  opacity: 0.5;
-  cursor: wait;
-}
-
 /* モバイル対応 */
 @media (max-width: 768px) {
   .transparent-sphere {
@@ -534,10 +451,6 @@ body {
 
   .sphere-subtext {
     font-size: 1rem;
-  }
-
-  .image-title {
-    font-size: 1.5rem;
   }
 }
 </style>
