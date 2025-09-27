@@ -1,7 +1,6 @@
 <template>
   <div class="social-media-container">
     <div class="social-icon-wrapper">
-      <!-- 直接使用原生HTML元素代替组件 -->
       <a href="https://x.com/deco27" target="_blank" rel="noopener noreferrer" class="social-icon">
         <img src="/image/twitter.png" alt="X (Twitter)" class="social-icon-inner" />
       </a>
