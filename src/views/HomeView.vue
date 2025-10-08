@@ -1,20 +1,24 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { preloadImage } from '../utils/imageLoader'
-import { detectNetworkQuality, detectBatteryStatus } from '../utils/performanceOptimizer'
-import type { ImageLoadingStatus } from '../types'
 
 // 画像を直接importする
 import image1 from '/image/1.png'
 import image2 from '/image/2.png'
 
-// 画像の状態管理
-const showFirstImage = ref(true)
-const isTransitioning = ref(false)
-const isSecondImageLoaded = ref(false)
-const isImageLoading = ref(false)
-const loadingProgress = ref(0)
+// IntroductionViewで使用する画像のプリロード用URL
+const introductionImages = [
+  '/image/3.png',
+  '/image/4.png',
+  '/image/5.png',
+  '/image/6.png',
+  '/image/7.png',
+  '/image/8.png'
+]
+
+// 状態管理
+const isLoading = ref(false)
+const currentImageIndex = ref(0)
 
 const router = useRouter()
 
@@ -22,116 +26,37 @@ const router = useRouter()
 const mouseX = ref(0)
 const mouseY = ref(0)
 
-// 画像のプリロード処理
-const handleImagePreload = async (imageSrc: string) => {
+// ページ遷移関数 - 2.pngへのアニメーション遷移を追加
+const goToIntroduction = () => {
+  if (isLoading.value) return
+  
+  isLoading.value = true
+  
   try {
-    isImageLoading.value = true
-    loadingProgress.value = 0
+    // 2.pngに切り替えるアニメーション
+    currentImageIndex.value = 1
     
-    // ネットワーク品質の検出
-    const networkQuality = detectNetworkQuality()
-    if (networkQuality === 'slow-2g' || networkQuality === '2g') {
-      console.warn('⚠️ 低速ネットワーク環境が検出されました。画像の読み込みが遅くなる可能性があります。')
-    }
+    const sphereElement = document.querySelector('.transparent-sphere') as HTMLElement | null
     
-    // バッテリー状態の検出（省エネモードの判断に使用）
-    const batteryLevel = await detectBatteryStatus()
-    if (batteryLevel && batteryLevel < 0.2) {
-      console.warn('⚠️ バッテリー残量が少ないため、画像の読み込みが制限される場合があります。')
-    }
-    
-    // 画像のプリロード（ユーティリティ関数を使用）
-    await preloadImage(imageSrc, (progress) => {
-      loadingProgress.value = progress
-    })
-    
-    isImageLoading.value = false
-    loadingProgress.value = 100
-    
-  } catch (error) {
-    console.error('画像の読み込みエラー:', error)
-    isImageLoading.value = false
-    loadingProgress.value = 0
-    throw error
-  }
-}
-
-// 画像切り替えアニメーション
-const switchImage = async () => {
-  // トランジション中または読み込み中は操作を無視
-  if (isTransitioning.value || isImageLoading.value) {
-    console.info('画像の切り替え操作がキャンセルされました（トランジション中または読み込み中）')
-    return
-  }
-
-  try {
-    // 1.png -> 2.png -> 紹介ページ の一連の流れ
-    isTransitioning.value = true
-
-    // 2.pngのプリロードを開始 - 実際に画像が読み込まれるまで待つ
-    if (!isSecondImageLoaded.value) {
-      try {
-        await handleImagePreload(image2)
-        isSecondImageLoaded.value = true
-      } catch (error) {
-        console.error('画像の処理に失敗しました:', error)
-        isTransitioning.value = false
-        return
-      }
-    }
-
-    // DOM要素の取得
-    const transitionElement = document.getElementById('transition-container')
-    const sphereElement = document.querySelector('.transparent-sphere')
-
-    // フェードアウト - より明確なアニメーション
-    if (transitionElement) {
-      transitionElement.style.transition = 'opacity 1s ease-out, transform 1s ease-out'
-      transitionElement.style.opacity = '0'
-      transitionElement.style.transform = 'scale(1.1)'
-    }
-
-    // 球体を即座に消失させる
     if (sphereElement) {
+      // 球体にフェードアウトアニメーションを適用
       sphereElement.classList.add('fade-out')
     }
-
-    // アニメーションの完了を待つ
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 1000))
-
-    // 画像を切り替える
-    showFirstImage.value = false
-
-    // フェードイン - 2.pngを表示
-    if (transitionElement) {
-      transitionElement.style.transition = 'opacity 0.5s ease-in'
-      transitionElement.style.opacity = '1'
-      transitionElement.style.transform = 'scale(1)'
-    }
-
-    // 2.pngを短時間表示
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 300))
-
-    // 2.pngから紹介ページへの切り替えアニメーション
-    if (transitionElement) {
-      transitionElement.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out'
-      transitionElement.style.opacity = '0'
-      transitionElement.style.transform = 'scale(1.1)'
-    }
-
-    // アニメーションの完了を待つ
-    await nextTick()
-    await new Promise(resolve => setTimeout(resolve, 800))
-
-    // 紹介ページにルーティング
-    router.push('/introduction')
-
+    
+    // 画像切り替えと球体アニメーションの完了を待ってからページ遷移
+    setTimeout(() => {
+      router.push('/introduction')
+      // 実際には遷移後にリセットされるが念のため
+      setTimeout(() => {
+        isLoading.value = false
+        if (sphereElement) {
+          sphereElement.classList.remove('fade-out')
+        }
+      }, 1000)
+    }, 1000)
   } catch (error) {
-    console.error('画像切り替えプロセス中にエラーが発生しました:', error)
-  } finally {
-    isTransitioning.value = false
+    console.error('ページ遷移中にエラーが発生しました:', error)
+    isLoading.value = false
   }
 }
 
@@ -149,9 +74,20 @@ const handleMouseMove = (e: MouseEvent) => {
 onMounted(() => {
   window.addEventListener('mousemove', handleMouseMove)
   
-  // 初期画像のプリロード（バックグラウンドで実行）
-  handleImagePreload(image1).catch(error => {
-    console.error('初期画像のプリロードに失敗しました:', error)
+  // 画像のプリロード
+  const img1 = new Image()
+  img1.src = image1
+  
+  const img2 = new Image()
+  img2.src = image2
+  
+  // IntroductionViewの画像もあらかじめプリロードしておく
+  // プリロードはバックグラウンドで非同期に行う
+  introductionImages.forEach((url, index) => {
+    const img = new Image()
+    img.src = url
+    img.onload = () => console.log(`主页预加载图片${index + 3}成功: ${url}`)
+    img.onerror = () => console.error(`主页预加载图片${index + 3}失败: ${url}`)
   })
 })
 
@@ -166,17 +102,17 @@ onUnmounted(() => {
     <!-- 背景グラデーション -->
     <div class="background-gradient"></div>
 
-    <!-- 画像切り替えコンテナ -->
+    <!-- 画像コンテナ -->
     <div id="transition-container" class="image-transition-container">
-      <!-- 最初の画像：Monitoring Best Friend Remix -->
-      <div v-if="showFirstImage" class="image-container first-image">
+      <!-- 背景画像1 -->
+      <div class="image-container first-image" :class="{ 'active': currentImageIndex === 0 }">
         <img :src="image1" alt="Monitoring Best Friend Remix" class="fullscreen-image" />
         <div class="image-overlay"></div>
       </div>
-
-      <!-- 次の画像：モニタリング -->
-      <div v-else class="image-container second-image" @click="switchImage" style="cursor: pointer">
-        <img :src="image2" alt="モニタリング" class="fullscreen-image" />
+      
+      <!-- 背景画像2 -->
+      <div class="image-container second-image" :class="{ 'active': currentImageIndex === 1 }">
+        <img :src="image2" alt="DECO27 Second Image" class="fullscreen-image" />
         <div class="image-overlay"></div>
       </div>
     </div>
@@ -184,18 +120,17 @@ onUnmounted(() => {
     <!-- 半透明な円形球体 -->
     <div
       class="transparent-sphere"
-      @click="switchImage"
+      @click="goToIntroduction"
       :style="{
         transform: `translate(${mouseX * 30}px, ${mouseY * 30}px)`,
-        cursor: isTransitioning || isImageLoading ? 'wait' : 'pointer'
+        cursor: isLoading ? 'wait' : 'pointer'
       }"
     >
       <div class="sphere-content">
         <p class="sphere-text">DECO27</p>
-        <p class="sphere-subtext" v-if="showFirstImage">
-          {{ isImageLoading ? `画像を読み込んでいます...${loadingProgress}%` : 'クリックして続ける' }}
+        <p class="sphere-subtext">
+          {{ isLoading ? '移動中...' : 'クリックして続ける' }}
         </p>
-        <p class="sphere-subtext" v-else>クリックして紹介を見る</p>
       </div>
     </div>
 
@@ -287,6 +222,14 @@ body {
   height: 100vh;
   overflow: hidden;
   z-index: -1;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+/* アクティブな画像の表示 */
+.image-container.active {
+  opacity: 1;
+  z-index: 1;
 }
 
 /* 強化された画像の自動調整 - 完全なカバレッジを確保 */

@@ -476,25 +476,25 @@ a {
 
 /* ブレークポイント */
 @media (max-width: 1200px) {
-  .xl:hidden {
+  .hidden-xl {
     display: none;
   }
 }
 
 @media (max-width: 1024px) {
-  .lg:hidden {
+  .hidden-lg {
     display: none;
   }
 }
 
 @media (max-width: 768px) {
-  .md:hidden {
+  .hidden-md {
     display: none;
   }
 }
 
 @media (max-width: 480px) {
-  .sm:hidden {
+  .hidden-sm {
     display: none;
   }
 }
